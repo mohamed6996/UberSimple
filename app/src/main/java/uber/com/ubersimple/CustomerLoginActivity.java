@@ -33,10 +33,13 @@ public class CustomerLoginActivity extends AppCompatActivity implements View.OnC
         mDatabaseRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers");
 
 
-        email_edt = findViewById(R.id.driver_email);
-        password_edt = findViewById(R.id.driver_password);
-        login_btn = findViewById(R.id.driver_login);
-        register_btn = findViewById(R.id.driver_register);
+        email_edt = findViewById(R.id.customer_email);
+        password_edt = findViewById(R.id.customer_password);
+        login_btn = findViewById(R.id.customer_login);
+        register_btn = findViewById(R.id.customer_register);
+
+        login_btn.setOnClickListener(this);
+        register_btn.setOnClickListener(this);
 
 
     }
@@ -61,26 +64,27 @@ public class CustomerLoginActivity extends AppCompatActivity implements View.OnC
         int id = view.getId();
 
         switch (id) {
-            case R.id.driver_login:
+            case R.id.customer_login:
                 mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        Intent intent = new Intent(CustomerLoginActivity.this, MapsActivity.class);
+                        Intent intent = new Intent(CustomerLoginActivity.this, CustomerMapActivity.class);
                         startActivity(intent);
                         finish();
 
                     }
                 });
                 break;
-            case R.id.driver_register:
+            case R.id.customer_register:
                 mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        String user_id = mAuth.getCurrentUser().getUid();
+                      //  String user_id = mAuth.getCurrentUser().getUid();
+                        String user_id = task.getResult().getUser().getUid();
                         mDatabaseRef.child(user_id).setValue(true).addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
-                                Intent intent = new Intent(CustomerLoginActivity.this, MapsActivity.class);
+                                Intent intent = new Intent(CustomerLoginActivity.this, CustomerMapActivity.class);
                                 startActivity(intent);
                                 finish();
                             }
