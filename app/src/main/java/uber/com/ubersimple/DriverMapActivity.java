@@ -29,7 +29,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
-import java.util.Map;
 
 public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
@@ -60,25 +59,23 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mAuth = FirebaseAuth.getInstance();
         mCurrentUser = mAuth.getCurrentUser();
         driver_id = mCurrentUser.getUid();
-       // availableRef = FirebaseDatabase.getInstance().getReference("driversAvailable");
-       // geoFire = new GeoFire(availableRef);
+        // availableRef = FirebaseDatabase.getInstance().getReference("driversAvailable");
+        // geoFire = new GeoFire(availableRef);
 
         getAssignedCustomer();
 
     }
 
     private void getAssignedCustomer() {
-        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driver_id);
+        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driver_id).child("customerRideId");
         assignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()){
-                    Map<String,Object> map = ( Map<String,Object>) dataSnapshot.getValue();
-                    if (map.get("customerRideId") != null){
-                        customer_id = map.get("customerRideId").toString();
-                        getAssignedCustomerPickupLocation();
-                    }
+                if (dataSnapshot.exists()) {
+                    customer_id = dataSnapshot.getValue().toString();
+                    getAssignedCustomerPickupLocation();
                 }
+                
             }
 
             @Override
@@ -94,7 +91,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()){
+                if (dataSnapshot.exists()) {
                     List<Object> list = (List<Object>) dataSnapshot.getValue();
                     double locationLat = 0;
                     double locationLng = 0;
@@ -177,15 +174,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         geoFireWorking = new GeoFire(workingRef);
 
 
-        if (customer_id.isEmpty()){// the driver is available
+        if (customer_id.isEmpty()) {// the driver is available
             geoFireAvailble.setLocation(driver_id, new GeoLocation(location.getLatitude(), location.getLongitude()));
             geoFireWorking.removeLocation(driver_id);
-        }else {
+        } else {
             geoFireWorking.setLocation(driver_id, new GeoLocation(location.getLatitude(), location.getLongitude()));
             geoFireAvailble.removeLocation(driver_id);
         }
-
-
 
 
     }
@@ -195,8 +190,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     protected void onStop() {
         super.onStop();
         // the driver is not available, remove his location
-       // geoFire.removeLocation(driver_id);
-
+        // geoFire.removeLocation(driver_id);
 
 
     }
