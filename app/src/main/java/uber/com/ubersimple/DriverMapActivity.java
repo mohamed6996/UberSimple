@@ -43,7 +43,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     private DatabaseReference availableRef, workingRef;
 
     private String driver_id;
-    private String customer_id;
+    private String customer_id = "";
     private GeoFire geoFireAvailble, geoFireWorking;
 
 
@@ -75,7 +75,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                     customer_id = dataSnapshot.getValue().toString();
                     getAssignedCustomerPickupLocation();
                 }
-                
+
             }
 
             @Override
