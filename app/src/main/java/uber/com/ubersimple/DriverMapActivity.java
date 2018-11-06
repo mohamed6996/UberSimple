@@ -19,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -37,10 +38,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
+    private Marker pickupMarker;
+
 
     private FirebaseAuth mAuth;
     private FirebaseUser mCurrentUser;
-    private DatabaseReference availableRef, workingRef;
+    private DatabaseReference availableRef, workingRef, assignedCustomerPickupLocationRef;
+    private ValueEventListener assignedCustomerPickupLocationRefListener;
 
     private String driver_id;
     private String customer_id = "";
@@ -67,13 +71,23 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     }
 
     private void getAssignedCustomer() {
-        DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driver_id).child("customerRideId");
+        final DatabaseReference assignedCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driver_id).child("customerRideId");
         assignedCustomerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     customer_id = dataSnapshot.getValue().toString();
                     getAssignedCustomerPickupLocation();
+                } else { // the customer canceled the request
+                    customer_id = "";
+                    if (pickupMarker != null) {
+                        pickupMarker.remove();
+                    }
+                    if (assignedCustomerPickupLocationRefListener != null){
+                        assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
+
+                    }
+
                 }
 
             }
@@ -87,11 +101,11 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     }
 
     private void getAssignedCustomerPickupLocation() {
-        DatabaseReference assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child("customerRequest").child(customer_id).child("l");
-        assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
+        assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child("customerRequest").child(customer_id).child("l");
+        assignedCustomerPickupLocationRefListener = assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
+                if (dataSnapshot.exists() && customer_id.equals("")) {
                     List<Object> list = (List<Object>) dataSnapshot.getValue();
                     double locationLat = 0;
                     double locationLng = 0;
@@ -99,7 +113,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                         locationLat = Double.parseDouble(list.get(0).toString());
                         locationLng = Double.parseDouble(list.get(1).toString());
                         LatLng driverLatLng = new LatLng(locationLat, locationLng);
-                        mMap.addMarker(new MarkerOptions().position(driverLatLng).title("pickup location"));
+                        pickupMarker = mMap.addMarker(new MarkerOptions().position(driverLatLng).title("pickup location"));
                     }
                 }
             }
